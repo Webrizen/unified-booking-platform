@@ -1,10 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import CreateBookingModal from '@/components/admin/CreateBookingModal';
+import IssueTicketModal from '@/components/admin/IssueTicketModal';
+import IssuePassModal from '@/components/admin/IssuePassModal';
+import BookingDetailsModal from '@/components/admin/BookingDetailsModal';
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [error, setError] = useState(null);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [isTicketModalOpen, setTicketModalOpen] = useState(false);
+  const [isPassModalOpen, setPassModalOpen] = useState(false);
+  const [isDetailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
 
   useEffect(() => {
     fetchBookings();
@@ -35,9 +44,33 @@ export default function BookingsPage() {
     }
   };
 
+  const openTicketModal = (bookingId) => {
+    setSelectedBookingId(bookingId);
+    setTicketModalOpen(true);
+  };
+
+  const openPassModal = (bookingId) => {
+    setSelectedBookingId(bookingId);
+    setPassModalOpen(true);
+  };
+
+  const openDetailsModal = (bookingId) => {
+    setSelectedBookingId(bookingId);
+    setDetailsModalOpen(true);
+  };
+
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Booking Management</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Booking Management</h1>
+        <button
+          onClick={() => setCreateModalOpen(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Create Booking
+        </button>
+      </div>
+
       {error && <p className="text-red-500 bg-red-100 p-4 rounded-lg mb-6">{error}</p>}
 
       <div className="bg-white p-6 rounded-lg shadow-md">
@@ -67,7 +100,7 @@ export default function BookingsPage() {
                     {booking.status}
                   </span>
                 </td>
-                <td className="py-2 px-4 border-b">
+                <td className="py-2 px-4 border-b flex items-center space-x-2">
                   <select
                     value={booking.status}
                     onChange={(e) => handleStatusChange(booking._id, e.target.value)}
@@ -78,12 +111,56 @@ export default function BookingsPage() {
                     <option value="cancelled">Cancelled</option>
                     <option value="completed">Completed</option>
                   </select>
+                  <button onClick={() => openDetailsModal(booking._id)} className="text-blue-600 hover:underline">Details</button>
+                  {booking.bookingType === 'waterPark' && (
+                    <button onClick={() => openTicketModal(booking._id)} className="text-green-600 hover:underline">Issue Tickets</button>
+                  )}
+                  {booking.bookingType === 'marriageGarden' && (
+                    <button onClick={() => openPassModal(booking._id)} className="text-purple-600 hover:underline">Issue Passes</button>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <CreateBookingModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onBookingCreated={() => {
+          fetchBookings();
+          setCreateModalOpen(false);
+        }}
+      />
+
+      {selectedBookingId && (
+        <>
+          <IssueTicketModal
+            isOpen={isTicketModalOpen}
+            onClose={() => setTicketModalOpen(false)}
+            bookingId={selectedBookingId}
+            onTicketsIssued={() => {
+              fetchBookings();
+              setTicketModalOpen(false);
+            }}
+          />
+          <IssuePassModal
+            isOpen={isPassModalOpen}
+            onClose={() => setPassModalOpen(false)}
+            bookingId={selectedBookingId}
+            onPassesIssued={() => {
+              fetchBookings();
+              setPassModalOpen(false);
+            }}
+          />
+          <BookingDetailsModal
+            isOpen={isDetailsModalOpen}
+            onClose={() => setDetailsModalOpen(false)}
+            bookingId={selectedBookingId}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import clientPromise from '@/lib/mongodb';
-import { sendBookingConfirmationEmail } from '@/lib/email';
 import { verifyToken } from '@/lib/auth';
 
 // Helper function to check room availability
@@ -18,7 +17,7 @@ async function isRoomAvailable(db, resourceId, checkInDate, checkOutDate) {
   return bookings.length === 0;
 }
 
-export async function GET(request) {
+export async function POST(request) {
   try {
     const payload = await verifyToken(request);
     if (!payload || payload.role !== 'admin') {
@@ -27,28 +26,10 @@ export async function GET(request) {
 
     const client = await clientPromise;
     const db = client.db(process.env.DB_NAME);
-    const bookings = await db.collection('bookings').find({}).toArray();
-    return NextResponse.json(bookings, { status: 200 });
-  } catch (error) {
-    console.error('Error fetching bookings:', error);
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
-  }
-}
-
-export async function POST(request) {
-  try {
-    const payload = await verifyToken(request);
-    if (!payload) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-
-    const client = await clientPromise;
-    const db = client.db(process.env.DB_NAME);
     const body = await request.json();
-    const { resourceId, bookingType, details } = body;
-    const userId = payload.userId;
+    const { userId, resourceId, bookingType, details } = body;
 
-    if (!resourceId || !bookingType || !details) {
+    if (!userId || !resourceId || !bookingType || !details) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
@@ -57,14 +38,19 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Resource not found' }, { status: 404 });
     }
 
+    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
     let totalPrice = 0;
-    let newBooking = {
+    let newBookingData = {
       userId: new ObjectId(userId),
       resourceId: new ObjectId(resourceId),
       bookingType,
       details,
-      status: 'pending',
-      createdBy: 'user',
+      status: 'confirmed', // Admin bookings are auto-confirmed
+      createdBy: 'admin',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -88,37 +74,35 @@ export async function POST(request) {
         if (existingGardenBooking) {
           return NextResponse.json({ message: 'Marriage garden not available on the selected date' }, { status: 409 });
         }
-        totalPrice = resource.price; // Price might depend on services, simplified here
-        newBooking.passes = [];
+        totalPrice = resource.price;
         break;
 
       case 'waterPark':
-        const { date, numberOfTickets } = details.waterParkBooking;
-        if(!date || !numberOfTickets){
-            return NextResponse.json({ message: 'Date and number of tickets are required' }, { status: 400 });
-        }
-        totalPrice = numberOfTickets * resource.price; // Simplified pricing
-        newBooking.details.waterParkBooking.tickets = [];
-        delete newBooking.details.waterParkBooking.numberOfTickets;
+        let parkTotalPrice = 0;
+        // This part will be updated to use the new Ticket model later
+        details.waterParkBooking.tickets.forEach(ticket => {
+          parkTotalPrice += ticket.quantity * resource.price; // Simplified pricing
+        });
+        totalPrice = parkTotalPrice;
         break;
 
       default:
         return NextResponse.json({ message: 'Invalid booking type' }, { status: 400 });
     }
 
-    newBooking.totalPrice = totalPrice;
-
-    const result = await db.collection('bookings').insertOne(newBooking);
-    newBooking._id = result.insertedId;
-
-    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-    if (user) {
-      await sendBookingConfirmationEmail(user.email, newBooking);
+    newBookingData.totalPrice = totalPrice;
+    newBookingData.passes = [];
+    if(bookingType === 'waterPark') {
+        newBookingData.details.waterParkBooking.tickets = [];
     }
 
-    return NextResponse.json({ success: true, booking: newBooking }, { status: 201 });
+
+    const result = await db.collection('bookings').insertOne(newBookingData);
+    newBookingData._id = result.insertedId;
+
+    return NextResponse.json({ success: true, booking: newBookingData }, { status: 201 });
   } catch (error) {
-    console.error('Error creating booking:', error);
+    console.error('Error creating booking by admin:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
