@@ -2,19 +2,7 @@ import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import clientPromise from '@/lib/mongodb';
 import { sendBookingConfirmationEmail } from '@/lib/email';
-import { jwtVerify } from 'jose';
-
-async function verifyToken(request) {
-  const token = request.cookies.get('token')?.value;
-  if (!token) return null;
-  try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    const { payload } = await jwtVerify(token, secret);
-    return payload;
-  } catch (err) {
-    return null;
-  }
-}
+import { verifyToken } from '@/lib/auth';
 
 // Helper function to check room availability
 async function isRoomAvailable(db, resourceId, checkInDate, checkOutDate) {
@@ -75,7 +63,7 @@ export async function POST(request) {
       resourceId: new ObjectId(resourceId),
       bookingType,
       details,
-      status: 'confirmed', // Default to confirmed for simplicity
+      status: 'pending',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
