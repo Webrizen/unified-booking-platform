@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono, Bricolage_Grotesque } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 
 const BricolageGrotesque = Bricolage_Grotesque({
