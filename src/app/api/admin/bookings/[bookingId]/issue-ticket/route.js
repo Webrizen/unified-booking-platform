@@ -36,8 +36,8 @@ export async function POST(request, { params }) {
     for (const ticketInfo of tickets) {
       const { type, price } = ticketInfo;
       const uniqueId = new ObjectId();
-      const qrCodeData = JSON.stringify({ bookingId, ticketId: uniqueId.toHexString(), type });
-      const qrCodeUrl = await qrcode.toDataURL(qrCodeData);
+      const verificationUrl = `${request.nextUrl.origin}/verify/ticket/${uniqueId.toHexString()}`;
+      const qrCodeUrl = await qrcode.toDataURL(verificationUrl);
 
       const newTicket = {
         _id: uniqueId,
@@ -53,7 +53,7 @@ export async function POST(request, { params }) {
         updatedAt: new Date(),
       };
 
-      const result = await db.collection('tickets').insertOne(newTicket);
+      await db.collection('tickets').insertOne(newTicket);
       createdTickets.push(newTicket);
       createdTicketIds.push(newTicket._id);
     }

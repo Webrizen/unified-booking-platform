@@ -36,8 +36,8 @@ export async function POST(request, { params }) {
     for (const passInfo of passes) {
       const { eventName, guestName, accessLevel } = passInfo;
       const uniqueId = new ObjectId();
-      const qrCodeData = JSON.stringify({ bookingId, passId: uniqueId.toHexString(), guestName });
-      const qrCodeUrl = await qrcode.toDataURL(qrCodeData);
+      const verificationUrl = `${request.nextUrl.origin}/verify/pass/${uniqueId.toHexString()}`;
+      const qrCodeUrl = await qrcode.toDataURL(verificationUrl);
 
       const newPass = {
         _id: uniqueId,

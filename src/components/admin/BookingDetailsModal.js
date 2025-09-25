@@ -15,13 +15,27 @@ export default function BookingDetailsModal({ isOpen, onClose, bookingId }) {
   const fetchBookingDetails = async () => {
     try {
       setError(null);
-      // We need an API endpoint to fetch a single booking's details including populated tickets/passes
-      // For now, we'll assume an endpoint like /api/bookings/[bookingId] exists.
-      // I will create this endpoint later.
       const res = await fetch(`/api/bookings/${bookingId}`);
       if (!res.ok) throw new Error('Failed to fetch booking details');
       const data = await res.json();
       setBooking(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDownloadPdf = async (type, id) => {
+    try {
+      const res = await fetch(`/api/download/${type}/${id}`);
+      if (!res.ok) throw new Error(`Failed to download ${type} PDF`);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${type}-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     } catch (err) {
       setError(err.message);
     }
@@ -53,6 +67,7 @@ export default function BookingDetailsModal({ isOpen, onClose, bookingId }) {
                       <p><strong>Type:</strong> {ticket.details.type}</p>
                       <p><strong>Price:</strong> ${ticket.details.price}</p>
                       <img src={ticket.qrCode} alt="Ticket QR Code" className="w-32 h-32 mx-auto mt-2" />
+                      <button onClick={() => handleDownloadPdf('ticket', ticket._id)} className="w-full mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Download PDF</button>
                     </div>
                   ))}
                 </div>
@@ -69,6 +84,7 @@ export default function BookingDetailsModal({ isOpen, onClose, bookingId }) {
                       <p><strong>Event:</strong> {pass.details.eventName}</p>
                       <p><strong>Guest:</strong> {pass.details.guestName}</p>
                       <img src={pass.qrCode} alt="Pass QR Code" className="w-32 h-32 mx-auto mt-2" />
+                      <button onClick={() => handleDownloadPdf('pass', pass._id)} className="w-full mt-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Download PDF</button>
                     </div>
                   ))}
                 </div>
