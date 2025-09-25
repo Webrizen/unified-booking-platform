@@ -1,18 +1,29 @@
-import mongoose from "mongoose";
+import { MongoClient } from 'mongodb';
 
-let isConnected = false;
+const uri = process.env.MONGODB_URI;
+const options = {
+  useUnifiedTopology: true,
+  useNewUrlParser: true,
+};
 
-export async function connectToDB() {
-  if (isConnected) return;
+let client;
+let clientPromise;
 
-  try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      dbName: "unified-booking-platform",
-    });
-
-    isConnected = true;
-    console.log("✅ MongoDB connected");
-  } catch (err) {
-    console.error("❌ MongoDB connection error:", err);
-  }
+if (!process.env.MONGODB_URI) {
+  throw new Error('Please add your Mongo URI to .env.local');
 }
+
+if (process.env.NODE_ENV === 'development') {
+  // In development, use a global variable to cache the client promise
+  if (!global._mongoClientPromise) {
+    client = new MongoClient(uri, options);
+    global._mongoClientPromise = client.connect();
+  }
+  clientPromise = global._mongoClientPromise;
+} else {
+  // In production, connect directly to MongoDB
+  client = new MongoClient(uri, options);
+  clientPromise = client.connect();
+}
+
+export default clientPromise;
