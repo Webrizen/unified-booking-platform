@@ -1,9 +1,29 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
+async function embedQrCode(pdfDoc, page, qrCodeDataUrl) {
+    if (qrCodeDataUrl) {
+      // QR code data URL is like `data:image/png;base64,iVBORw0KGgo...`
+      // We need to extract the base64 part
+      const base64 = qrCodeDataUrl.split(',')[1];
+      const qrImageBytes = Buffer.from(base64, 'base64');
+      const qrImage = await pdfDoc.embedPng(qrImageBytes);
+
+      const { width } = page.getSize();
+      const yPosition = 100; // Fixed position for QR code at the bottom
+
+      page.drawImage(qrImage, {
+        x: width / 2 - 60, // Centered
+        y: yPosition,
+        width: 120,
+        height: 120,
+      });
+    }
+  }
+
 export async function generateTicketPdf(ticket) {
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([300, 400]);
-  const { width, height } = page.getSize();
+  const page = pdfDoc.addPage([300, 450]);
+  const { height } = page.getSize();
 
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -33,15 +53,7 @@ export async function generateTicketPdf(ticket) {
   });
 
   // QR Code
-  if (ticket.qrCode) {
-    const qrImage = await pdfDoc.embedPng(ticket.qrCode);
-    page.drawImage(qrImage, {
-      x: width / 2 - 50,
-      y: yPosition - 110,
-      width: 100,
-      height: 100,
-    });
-  }
+  await embedQrCode(pdfDoc, page, ticket.qrCode);
 
   const pdfBytes = await pdfDoc.save();
   return pdfBytes;
@@ -49,8 +61,8 @@ export async function generateTicketPdf(ticket) {
 
 export async function generatePassPdf(pass) {
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([300, 400]);
-  const { width, height } = page.getSize();
+  const page = pdfDoc.addPage([300, 450]);
+  const { height } = page.getSize();
 
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -81,15 +93,7 @@ export async function generatePassPdf(pass) {
   });
 
   // QR Code
-  if (pass.qrCode) {
-    const qrImage = await pdfDoc.embedPng(pass.qrCode);
-    page.drawImage(qrImage, {
-      x: width / 2 - 50,
-      y: yPosition - 110,
-      width: 100,
-      height: 100,
-    });
-  }
+  await embedQrCode(pdfDoc, page, pass.qrCode);
 
   const pdfBytes = await pdfDoc.save();
   return pdfBytes;

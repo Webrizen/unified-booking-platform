@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import CreateBookingModal from '@/components/admin/CreateBookingModal';
-import IssueTicketModal from '@/components/admin/IssueTicketModal';
 import IssuePassModal from '@/components/admin/IssuePassModal';
 import BookingDetailsModal from '@/components/admin/BookingDetailsModal';
 
@@ -10,7 +9,6 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [error, setError] = useState(null);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const [isTicketModalOpen, setTicketModalOpen] = useState(false);
   const [isPassModalOpen, setPassModalOpen] = useState(false);
   const [isDetailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState(null);
@@ -42,11 +40,6 @@ export default function BookingsPage() {
     } catch (err) {
       setError(err.message);
     }
-  };
-
-  const openTicketModal = (bookingId) => {
-    setSelectedBookingId(bookingId);
-    setTicketModalOpen(true);
   };
 
   const openPassModal = (bookingId) => {
@@ -112,9 +105,6 @@ export default function BookingsPage() {
                     <option value="completed">Completed</option>
                   </select>
                   <button onClick={() => openDetailsModal(booking._id)} className="text-blue-600 hover:underline">Details</button>
-                  {booking.bookingType === 'waterPark' && (
-                    <button onClick={() => openTicketModal(booking._id)} className="text-green-600 hover:underline">Issue Tickets</button>
-                  )}
                   {booking.bookingType === 'marriageGarden' && (
                     <button onClick={() => openPassModal(booking._id)} className="text-purple-600 hover:underline">Issue Passes</button>
                   )}
@@ -136,15 +126,6 @@ export default function BookingsPage() {
 
       {selectedBookingId && (
         <>
-          <IssueTicketModal
-            isOpen={isTicketModalOpen}
-            onClose={() => setTicketModalOpen(false)}
-            bookingId={selectedBookingId}
-            onTicketsIssued={() => {
-              fetchBookings();
-              setTicketModalOpen(false);
-            }}
-          />
           <IssuePassModal
             isOpen={isPassModalOpen}
             onClose={() => setPassModalOpen(false)}

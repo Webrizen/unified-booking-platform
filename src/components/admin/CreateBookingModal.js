@@ -8,13 +8,27 @@ export default function CreateBookingModal({ isOpen, onClose, onBookingCreated }
   const [bookingType, setBookingType] = useState('room');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedResource, setSelectedResource] = useState('');
-  const [details, setDetails] = useState({});
+  const [details, setDetails] = useState({
+    roomBooking: {},
+    gardenBooking: {},
+    waterParkBooking: { date: '', tickets: [{ type: 'adult', price: '' }] },
+  });
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
       fetchUsers();
       fetchResources();
+      // Reset form on open
+      setDetails({
+        roomBooking: {},
+        gardenBooking: {},
+        waterParkBooking: { date: '', tickets: [{ type: 'adult', price: '' }] },
+      });
+      setSelectedUser('');
+      setSelectedResource('');
+      setBookingType('room');
+      setError(null);
     }
   }, [isOpen]);
 
@@ -47,8 +61,42 @@ export default function CreateBookingModal({ isOpen, onClose, onBookingCreated }
       ...prev,
       [parent]: {
         ...prev[parent],
-        [key]: value
-      }
+        [key]: value,
+      },
+    }));
+  };
+
+  const handleTicketChange = (index, e) => {
+    const { name, value } = e.target;
+    const newTickets = [...details.waterParkBooking.tickets];
+    newTickets[index][name] = value;
+    setDetails(prev => ({
+        ...prev,
+        waterParkBooking: {
+            ...prev.waterParkBooking,
+            tickets: newTickets
+        }
+    }));
+  };
+
+  const addTicket = () => {
+    setDetails(prev => ({
+        ...prev,
+        waterParkBooking: {
+            ...prev.waterParkBooking,
+            tickets: [...prev.waterParkBooking.tickets, { type: 'adult', price: '' }]
+        }
+    }));
+  };
+
+  const removeTicket = (index) => {
+    const newTickets = details.waterParkBooking.tickets.filter((_, i) => i !== index);
+    setDetails(prev => ({
+        ...prev,
+        waterParkBooking: {
+            ...prev.waterParkBooking,
+            tickets: newTickets
+        }
     }));
   };
 
@@ -56,12 +104,25 @@ export default function CreateBookingModal({ isOpen, onClose, onBookingCreated }
     e.preventDefault();
     setError(null);
 
-    const bookingData = {
-      userId: selectedUser,
-      resourceId: selectedResource,
-      bookingType,
-      details,
-    };
+    let bookingData;
+    if (bookingType === 'waterPark') {
+        bookingData = {
+            userId: selectedUser,
+            resourceId: selectedResource,
+            bookingType,
+            details: {
+                date: details.waterParkBooking.date,
+                tickets: details.waterParkBooking.tickets
+            }
+        };
+    } else {
+        bookingData = {
+            userId: selectedUser,
+            resourceId: selectedResource,
+            bookingType,
+            details: details[bookingType === 'room' ? 'roomBooking' : 'gardenBooking'],
+        };
+    }
 
     try {
       const res = await fetch('/api/admin/bookings', {
@@ -152,7 +213,32 @@ export default function CreateBookingModal({ isOpen, onClose, onBookingCreated }
           {bookingType === 'waterPark' && (
             <div className="space-y-4 p-4 border rounded-md">
               <h3 className="font-semibold">Water Park Details</h3>
-              <input type="date" name="waterParkBooking.date" onChange={handleDetailChange} className="w-full p-2 border rounded" placeholder="Date" required />
+              <input type="date" name="waterParkBooking.date" value={details.waterParkBooking.date} onChange={handleDetailChange} className="w-full p-2 border rounded" placeholder="Date" required />
+              <h4 className="font-medium pt-2">Tickets</h4>
+              {details.waterParkBooking.tickets.map((ticket, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    name="type"
+                    value={ticket.type}
+                    onChange={(e) => handleTicketChange(index, e)}
+                    className="w-full p-2 border rounded"
+                    placeholder="Ticket Type"
+                    required
+                  />
+                  <input
+                    type="number"
+                    name="price"
+                    value={ticket.price}
+                    onChange={(e) => handleTicketChange(index, e)}
+                    className="w-full p-2 border rounded"
+                    placeholder="Price"
+                    required
+                  />
+                  <button type="button" onClick={() => removeTicket(index)} className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600">-</button>
+                </div>
+              ))}
+              <button type="button" onClick={addTicket} className="w-full py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Add Ticket</button>
             </div>
           )}
 
