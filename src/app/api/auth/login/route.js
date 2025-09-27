@@ -15,7 +15,7 @@ export async function POST(request) {
 
     const user = await db.collection('users').findOne({ email });
 
-    if (!user || user.role !== 'admin') {
+    if (!user) {
       return NextResponse.json({ message: 'Invalid credentials or not an admin' }, { status: 401 });
     }
 
