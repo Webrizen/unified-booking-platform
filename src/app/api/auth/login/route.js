@@ -32,7 +32,7 @@ export async function POST(request) {
       .setExpirationTime('1h')
       .sign(secret);
 
-    const response = NextResponse.json({ success: true, message: 'Login successful' });
+    const response = NextResponse.json({ success: true, message: 'Login successful', token });
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
