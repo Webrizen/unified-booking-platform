@@ -15,8 +15,8 @@ export async function POST(request) {
 
     const user = await db.collection('users').findOne({ email });
 
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json({ message: 'Invalid credentials or not an admin' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
