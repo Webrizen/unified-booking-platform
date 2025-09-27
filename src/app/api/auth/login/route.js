@@ -15,8 +15,8 @@ export async function POST(request) {
 
     const user = await db.collection('users').findOne({ email });
 
-    if (!user) {
-      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json({ message: 'Invalid credentials or not an admin' }, { status: 401 });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -32,7 +32,7 @@ export async function POST(request) {
       .setExpirationTime('1h')
       .sign(secret);
 
-    const response = NextResponse.json({ success: true, message: 'Login successful', token });
+    const response = NextResponse.json({ success: true, message: 'Login successful' });
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',

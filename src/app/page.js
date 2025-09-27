@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import React from 'react'
 
 export default function page() {
@@ -12,17 +11,17 @@ export default function page() {
           Effortlessly manage, schedule, and optimize your bookings with our all-in-one platform. Designed for speed, simplicity, and scalability.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
-          <Link
-            href="/signup/admin"
+          <a
+            href="#"
             className="inline-block px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition"
           >
-            Create Admin Account
-          </Link>
+            Get Started
+          </a>
           <a
-            href="/signup"
+            href="#"
             className="inline-block px-8 py-3 bg-white border border-blue-600 text-blue-600 font-semibold rounded-lg shadow hover:bg-blue-50 transition"
           >
-            Create user Account
+            Learn More
           </a>
         </div>
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
