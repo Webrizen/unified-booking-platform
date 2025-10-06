@@ -12,13 +12,13 @@ export default function page() {
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
           <a
-            href="#"
+            href="/signup/admin"
             className="inline-block px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition"
           >
             Get Started
           </a>
           <a
-            href="#"
+            href="/login"
             className="inline-block px-8 py-3 bg-white border border-blue-600 text-blue-600 font-semibold rounded-lg shadow hover:bg-blue-50 transition"
           >
             Learn More

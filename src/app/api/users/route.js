@@ -36,27 +36,15 @@ export async function GET(request) {
   try {
     const client = await clientPromise;
     const db = client.db(process.env.DB_NAME);
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
 
-    if (!userId) {
-      return NextResponse.json({ message: 'User ID is required' }, { status: 400 });
-    }
-    if (!ObjectId.isValid(userId)) {
-      return NextResponse.json({ message: 'Invalid user ID' }, { status: 400 });
-    }
+    const users = await db.collection('users').find({}).toArray();
 
-    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    // Exclude passwords from all users
+    const usersWithoutPasswords = users.map(({ password, ...user }) => user);
 
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
-    }
-
-    // Exclude sensitive information
-    const { password, ...userWithoutPassword } = user;
-    return NextResponse.json(userWithoutPassword, { status: 200 });
+    return NextResponse.json(usersWithoutPasswords, { status: 200 });
   } catch (error) {
-    console.error('Fetching user error:', error);
+    console.error('Fetching users error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }

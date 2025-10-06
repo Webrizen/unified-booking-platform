@@ -37,6 +37,7 @@ export default function CreateBookingModal({ isOpen, onClose, onBookingCreated }
       const res = await fetch('/api/users');
       if (!res.ok) throw new Error('Failed to fetch users');
       const data = await res.json();
+      console.log(data);
       setUsers(data);
     } catch (err) {
       setError(err.message);
@@ -161,7 +162,9 @@ export default function CreateBookingModal({ isOpen, onClose, onBookingCreated }
             >
               <option value="">Select a User</option>
               {users.map(user => (
-                <option key={user._id} value={user._id}>{user.name} ({user.email})</option>
+                <option key={user._id} value={user._id}>
+                  {user.firstName} {user.lastName} {user.email}
+                </option>
               ))}
             </select>
           </div>
