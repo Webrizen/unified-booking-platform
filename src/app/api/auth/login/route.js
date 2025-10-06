@@ -15,7 +15,7 @@ export async function POST(request) {
 
     const user = await db.collection('users').findOne({ email });
 
-    if (!user || user.role !== 'admin') {
+    if (!user) {
       return NextResponse.json({ message: 'Invalid credentials or not an admin' }, { status: 401 });
     }
 
@@ -32,7 +32,7 @@ export async function POST(request) {
       .setExpirationTime('1h')
       .sign(secret);
 
-    const response = NextResponse.json({ success: true, message: 'Login successful' });
+    const response = NextResponse.json({ success: true, message: 'Login successful', token: token });
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
