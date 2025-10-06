@@ -1,5 +1,6 @@
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/providers/theme-provider";
 
 const BricolageGrotesque = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -18,7 +19,13 @@ export default function RootLayout({ children }) {
       <body
         className={`${BricolageGrotesque.className} antialiased`}
       >
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
